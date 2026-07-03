@@ -1,0 +1,54 @@
+# ChengbookTTS — 依赖清单
+#
+# 基础依赖（所有模型通用）：
+#    pip install -r requirements.txt
+#
+# 可选依赖（按模型安装）：
+#    pip install -e ".[cosyvoice3]"
+#    pip install -e ".[soulxpodcast]"
+#    pip install -e ".[indextts]"
+#    pip install -e ".[all]"
+
+# ====== 核心依赖 ======
+fastapi>=0.100.0
+uvicorn[standard]>=0.23.0
+soundfile>=0.12.1
+numpy>=1.26.0
+requests>=2.31.0
+pydantic>=2.0.0
+jieba>=0.42.1
+torch>=2.7.0
+torchaudio
+librosa
+pyyaml
+pytest
+
+# ====== CosyVoice3 依赖 ======
+# onnxruntime>=1.14.0
+# transformers>=4.30.0
+# einops
+# tiktoken
+# whisper
+
+# ====== SoulX-Podcast 依赖 ======
+# transformers>=4.57.0
+# accelerate>=1.10.0
+# diffusers
+# s3tokenizer
+# onnxruntime-gpu
+# triton>=3.0.0
+
+# ====== IndexTTS 依赖 ======
+# vllm==0.16.0
+# sentencepiece
+# omegaconf
+# gradio
+# modelscope
+# matplotlib
+# ninja
+# munch>=4.0.0
+# loguru
+# WeTextProcessing
+
+# ====== 客户端依赖（可选）======
+# sounddevice>=0.4.0

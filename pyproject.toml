@@ -1,0 +1,93 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chengbook-tts"
+version = "2.0.0"
+description = "统一多模型 TTS 平台 — CosyVoice3 + SoulX-Podcast + Index-TTS"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn[standard]>=0.23.0",
+    "soundfile>=0.12.1",
+    "numpy>=1.26.0",
+    "requests>=2.31.0",
+    "pydantic>=2.0.0",
+    "jieba>=0.42.1",
+    "torch>=2.7.0",
+    "torchaudio",
+    "librosa",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+# CosyVoice3 依赖
+cosyvoice3 = [
+    "conformer",
+    "diffusers",
+    "einops",
+    "gdown",
+    "hydra-core",
+    "hyperpyyaml",
+    "inflect",
+    "lightning",
+    "matplotlib",
+    "modelscope",
+    "omegaconf",
+    "onnxruntime-gpu>=1.14.0",
+    "packaging",
+    "phonemizer",
+    "pyarrow",
+    "pyworld",
+    "regex",
+    "rich",
+    "rootutils",
+    "scipy",
+    "tiktoken",
+    "transformers>=4.30.0",
+    "tqdm",
+    "Unidecode",
+    "WeTextProcessing",
+    "wget",
+    "openai-whisper",
+    "x-transformers",
+]
+
+# SoulX-Podcast 依赖
+soulxpodcast = [
+    "transformers>=4.57.0",
+    "accelerate>=1.10.0",
+    "diffusers",
+    "s3tokenizer",
+    "onnxruntime-gpu",
+    "einops",
+    "triton>=3.0.0",
+]
+
+# IndexTTS 依赖
+indextts = [
+    "vllm==0.16.0",
+    "sentencepiece",
+    "omegaconf",
+    "gradio",
+    "modelscope",
+    "matplotlib",
+    "ninja",
+    "munch>=4.0.0",
+    "loguru",
+    "WeTextProcessing",
+]
+
+# 全部安装
+all = [
+    "chengbook-tts[cosyvoice3,soulxpodcast,indextts]",
+]
+
+[project.scripts]
+chengbook-tts = "chengbook_tts.cli.main:main"
+
+[tool.setuptools.packages.find]
+include = ["chengbook_tts*"]

@@ -1,0 +1,20 @@
+# CosyVoice3 模型配置
+# 模型权重目录中的 cosyvoice3.yaml 会被自动检测
+
+model_type: cosyvoice3
+model_dir: ""  # 留空则自动检测: ../../ChengbookTTS_cosyvoice3/models/Fun-CosyVoice3-0.5B
+engine_name: "CosyVoice3"
+engine_version: "3.0"
+sample_rate: 24000
+
+# 加速选项
+fp16: true
+load_trt: false
+
+# 是否支持
+supports_streaming: true
+supports_emotion: true
+supports_multi_speaker: false
+
+# CosyVoice 源码路径（vendor/ 或外部项目）
+cosyvoice_root: ""  # 留空使用 vendor/cosyvoice

@@ -1,0 +1,18 @@
+# IndexTTS v1/v1.5 模型配置
+
+model_type: indextts_v1
+model_dir: ""  # 留空则自动检测: ../../Index-TTS-Vllm2/index-tts-vllm/checkpoints/Index-TTS-1.5-vLLM
+engine_name: "IndexTTS"
+engine_version: "1.5"
+sample_rate: 24000
+
+# vLLM 配置
+gpu_memory_utilization: 0.25
+
+# 是否支持
+supports_streaming: false
+supports_emotion: false
+supports_multi_speaker: false
+
+# 暂不启用
+hidden: true

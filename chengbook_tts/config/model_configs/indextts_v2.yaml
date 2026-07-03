@@ -1,0 +1,19 @@
+# IndexTTS-2 模型配置
+
+model_type: indextts_v2
+model_dir: ""  # 留空则自动检测: ../../Index-TTS-Vllm2/index-tts-vllm/checkpoints/IndexTTS-2-vLLM
+engine_name: "IndexTTS2"
+engine_version: "2.0"
+sample_rate: 22050
+
+# vLLM 配置
+gpu_memory_utilization: 0.25
+qwenemo_gpu_memory_utilization: 0.10
+
+# 是否支持
+supports_streaming: false
+supports_emotion: true
+supports_multi_speaker: false
+
+# 暂不启用
+hidden: true

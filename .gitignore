@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+
+# Runtime
+**/profiles/current.json
+custom_voices.json
+
+# Outputs
+outputs/
+*.wav
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model weights (should be symlinked from source projects)
+*.pt
+*.safetensors
+*.onnx
+*.pth
+*.bin
+*.ckpt
+
+# Model directories (large files, not code)
+models/
+
+# User custom voices
+prompts/custom/
