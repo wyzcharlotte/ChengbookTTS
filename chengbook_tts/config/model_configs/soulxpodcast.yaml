@@ -18,15 +18,15 @@ supports_multi_speaker: true
 # s3tokenizer 版本
 tokenizer_version: "speech_tokenizer_v2_25hz"
 
-# 音色（使用 SoulX-Podcast 自带的示例音频，prompt_text 与音频内容严格一致）
+# 音色（使用项目内 prompts/soulxpodcast/ 下的示例音频，prompt_text 与音频内容严格一致）
 voices:
   woman:
     name: "女声"
-    wav: ""  # 自动解析为 {SoulX-Podcast}/example/audios/female_mandarin.wav
+    wav: ""  # 自动解析为 prompts/soulxpodcast/woman.wav
     description: "SoulX-Podcast 女声示例"
     prompt_text: "喜欢攀岩、徒步、滑雪的语言爱好者，以及过两天要带着全部家当去景德镇做陶瓷的白日梦想家。"
   man:
     name: "男声"
-    wav: ""  # 自动解析为 {SoulX-Podcast}/example/audios/male_mandarin.wav
+    wav: ""  # 自动解析为 prompts/soulxpodcast/man.wav
     description: "SoulX-Podcast 男声示例"
     prompt_text: "呃，还有一个就是要跟大家纠正一点，就是我们在看电影的时候，尤其是游戏玩家，看电影的时候，在看到那个到西北这边的这个陕北民谣，嗯，这个可能在想，哎，是不是他是受到了黑神话的启发？"

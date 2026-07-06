@@ -159,8 +159,16 @@ class TTSEngine(ABC):
     # ---- 音色管理 ----
 
     def register_voice(self, voice_id: str, wav_path: str, name: str,
-                       description: str = '') -> bool:
-        """注册自定义音色（子类应重写）"""
+                       description: str = '', prompt_text: str = '') -> bool:
+        """注册自定义音色（子类应重写）
+
+        参数:
+            voice_id: 音色唯一标识
+            wav_path: 参考音频路径
+            name: 音色显示名称
+            description: 音色描述（可选）
+            prompt_text: 参考音频对应的转录文本（可选，上传后可提升音色克隆质量）
+        """
         raise NotImplementedError(
             f'{self.engine_name} does not support runtime voice registration')
 

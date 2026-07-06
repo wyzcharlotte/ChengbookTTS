@@ -121,18 +121,16 @@ class SoulXPodcastEngine(TTSEngine):
         # 用 model config 中定义的音色（SoulX-Podcast 示例音频 + 准确转录文本），
         # 兜底回退到全局 voices_config。
         model_voices = self._model_config.get('voices', {})
-        soulx_root = os.path.join(
-            str(settings.ROOT_DIR.parent.parent), 'SoulX-Podcast'
-        )
+        prompts_dir = str(settings.PROMPTS_DIR / 'soulxpodcast')
         for voice_id, info in self._voices_config.items():
             mv = model_voices.get(voice_id, {})
             wav = mv.get('wav', '') or info.get('wav', '')
-            # 如果是空字符串或相对路径，解析为 SoulX-Podcast example 下的音频
+            # 如果是空字符串或相对路径，解析为 prompts/soulxpodcast 下的音频
             if not wav or not os.path.isabs(wav):
                 if voice_id == 'woman':
-                    wav = os.path.join(soulx_root, 'example', 'audios', 'female_mandarin.wav')
+                    wav = os.path.join(prompts_dir, 'woman.wav')
                 elif voice_id == 'man':
-                    wav = os.path.join(soulx_root, 'example', 'audios', 'male_mandarin.wav')
+                    wav = os.path.join(prompts_dir, 'man.wav')
             prompt_text = mv.get('prompt_text', '') or info.get('prompt_text', '')
             if wav and os.path.exists(wav):
                 self._voice_wavs[voice_id] = wav
@@ -156,12 +154,10 @@ class SoulXPodcastEngine(TTSEngine):
         super().unload()
 
     def _setup_path(self):
-        """注入 SoulX-Podcast 源码路径"""
-        soulx_root = os.path.join(
-            str(settings.ROOT_DIR.parent.parent), 'SoulX-Podcast'
-        )
-        if soulx_root not in sys.path:
-            sys.path.insert(0, soulx_root)
+        """注入 vendor/ 源码路径（soulxpodcast 包）"""
+        vendor = str(settings.VENDOR_DIR)
+        if vendor not in sys.path:
+            sys.path.insert(0, vendor)
 
     @staticmethod
     def _patch_s3tokenizer_load_audio():
@@ -271,7 +267,7 @@ class SoulXPodcastEngine(TTSEngine):
     # ---- 音色管理 ----
 
     def register_voice(self, voice_id: str, wav_path: str, name: str,
-                       description: str = '') -> bool:
+                       description: str = '', prompt_text: str = '') -> bool:
         if voice_id in self._voice_wavs:
             return False
         if not os.path.exists(wav_path):
@@ -282,6 +278,7 @@ class SoulXPodcastEngine(TTSEngine):
             'name': name,
             'wav': wav_path,
             'description': description or f'自定义音色: {name}',
+            'prompt_text': prompt_text,
         }
         self._custom_voice_ids.add(voice_id)
         return True

@@ -70,7 +70,7 @@ def load_custom_voices_on_startup():
             logging.warning(f'Custom voice [{voice_id}] wav not found: {wav_path}')
             continue
         if engine.register_voice(voice_id, str(wav_path), meta.get('name', voice_id),
-                                  meta.get('description', '')):
+                                  meta.get('description', ''), meta.get('prompt_text', '')):
             restored += 1
         else:
             logging.warning(f'Custom voice [{voice_id}] restore failed')
@@ -86,6 +86,7 @@ async def create_custom_voice(
     file: UploadFile = File(..., description='音频文件 (WAV)'),
     name: str = Form(..., description='音色名称'),
     description: str = Form('', description='音色描述（可选）'),
+    prompt_text: str = Form('', description='参考音频对应的转录文本（可选，上传后可提升音色克隆质量）'),
     engine: TTSEngine = Depends(get_engine),
 ):
     """上传自定义音色"""
@@ -125,7 +126,7 @@ async def create_custom_voice(
     try:
         success = await loop.run_in_executor(
             concurrency.get_executor(),
-            engine.register_voice, voice_id, str(wav_path), name, description or '',
+            engine.register_voice, voice_id, str(wav_path), name, description or '', prompt_text or '',
         )
     except NotImplementedError:
         try:
@@ -150,6 +151,7 @@ async def create_custom_voice(
         'name': name,
         'wav': wav_filename,
         'description': description or f'用户自定义音色: {name}',
+        'prompt_text': prompt_text or '',
         'created_at': time.strftime('%Y-%m-%dT%H:%M:%S'),
     })
 

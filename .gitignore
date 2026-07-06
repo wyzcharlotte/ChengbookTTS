@@ -31,7 +31,11 @@ outputs/
 .DS_Store
 Thumbs.db
 
-# Model weights (should be symlinked from source projects)
+# ====== 模型权重和外部源码（不纳入版本控制） ======
+# 模型权重
+models/
+
+# 模型权重文件（防止在 vendor 中误提交）
 *.pt
 *.safetensors
 *.onnx
@@ -39,8 +43,14 @@ Thumbs.db
 *.bin
 *.ckpt
 
-# Model directories (large files, not code)
-models/
+# 外部源码副本（通过 setup 脚本或手动放置）
+chengbook_tts/vendor/cosyvoice/
+chengbook_tts/vendor/matcha/
+chengbook_tts/vendor/soulxpodcast/
+chengbook_tts/vendor/indextts/
+
+# SoulX-Podcast 示例音频（复制自外部项目）
+chengbook_tts/prompts/soulxpodcast/
 
 # User custom voices
 prompts/custom/

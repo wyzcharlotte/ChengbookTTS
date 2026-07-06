@@ -101,12 +101,10 @@ class IndexTTSEngine(TTSEngine):
         super().unload()
 
     def _setup_path(self):
-        """注入 IndexTTS 源码路径"""
-        indextts_root = os.path.join(
-            str(settings.ROOT_DIR.parent.parent), 'Index-TTS-Vllm2', 'index-tts-vllm'
-        )
-        if indextts_root not in sys.path:
-            sys.path.insert(0, indextts_root)
+        """注入 vendor/ 源码路径（indextts 包）"""
+        vendor = str(settings.VENDOR_DIR)
+        if vendor not in sys.path:
+            sys.path.insert(0, vendor)
 
     def _register_speaker(self, voice_id: str, wav_path: str, name: str):
         """注册说话人到 IndexTTS"""
@@ -159,7 +157,7 @@ class IndexTTSEngine(TTSEngine):
     # ---- 音色管理 ----
 
     def register_voice(self, voice_id: str, wav_path: str, name: str,
-                       description: str = '') -> bool:
+                       description: str = '', prompt_text: str = '') -> bool:
         if voice_id in self._speaker_registry:
             return False
         if not os.path.exists(wav_path):

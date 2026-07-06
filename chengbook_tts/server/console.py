@@ -43,6 +43,7 @@ h1 span{color:#38bdf8}
 .speed-val{min-width:36px;text-align:center;font-weight:bold;color:#38bdf8;font-size:14px}
 textarea{width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;padding:12px;font-size:14px;resize:vertical;min-height:60px}
 textarea:focus{outline:none;border-color:#0ea5e9}
+input:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
 .btn-play{width:100%;margin-top:10px;background:#0ea5e9;color:#fff;font-size:15px;padding:12px;border-radius:8px;border:none;cursor:pointer}
 .btn-play:hover{background:#0284c7}
 .btn-play:disabled{opacity:.5;cursor:not-allowed}
@@ -109,6 +110,10 @@ textarea:focus{outline:none;border-color:#0ea5e9}
     <input type="file" id="custWav" accept=".wav,audio/wav" style="flex:1;min-width:130px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;padding:6px;font-size:12px">
     <input type="text" id="custName" placeholder="音色名称" style="flex:1;min-width:110px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px">
     <button class="btn on" onclick="uploadVoice()" style="white-space:nowrap;font-size:12px;padding:6px 12px">&#x1f4e4; 上传克隆</button>
+  </div>
+  <div style="margin-top:8px">
+    <input type="text" id="custPromptText" placeholder="上传参考音频对应的转录文本可提升音色克隆质量" style="width:100%;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e2e8f0;padding:6px 10px;font-size:12px">
+    <span id="promptTextNote" style="display:none;font-size:11px;color:#ef4444;margin-top:4px">⚠ 当前模型不支持上传转录文本，仅 SoulXPodcast 可用</span>
   </div>
   <div class="status" id="uploadStatus"></div>
   <div id="customVoices" style="margin-top:6px"></div>
@@ -325,6 +330,15 @@ function updateCapUI(){
   // 多说话人 — 自定义音色区域
   let custArea=document.getElementById('customVoices').parentElement;
   if(custArea) custArea.style.display=caps.multi_speaker?'':'none';
+  // 转录文本 — 仅 SoulXPodcast 支持
+  let promptInput=document.getElementById('custPromptText');
+  let promptNote=document.getElementById('promptTextNote');
+  let supportsPrompt=activeModel==='soulxpodcast';
+  if(promptInput){
+    promptInput.disabled=!supportsPrompt;
+    promptInput.placeholder=supportsPrompt?'上传参考音频对应的转录文本可提升音色克隆质量':'当前模型不支持转录文本（仅 SoulXPodcast 可用）';
+  }
+  if(promptNote) promptNote.style.display=supportsPrompt?'none':'block';
 }
 
 async function loadVoices(){
@@ -437,16 +451,19 @@ function updateLive(){
 async function uploadVoice(){
   let file=document.getElementById('custWav').files[0];
   let name=document.getElementById('custName').value.trim();
+  let promptText=document.getElementById('custPromptText').value.trim();
   if(!file){ setUplStatus('❌ 请选择 WAV 文件'); return; }
   if(!name){ setUplStatus('❌ 请输入音色名称'); return; }
   setUplStatus('⏳ 上传中...');
   let fd=new FormData(); fd.append('file',file); fd.append('name',name);
+  if(promptText && activeModel==='soulxpodcast') fd.append('prompt_text',promptText);
   try{
     let r=await fetch('/api/voices/custom',{method:'POST',body:fd});
     if(!r.ok){ let e=await safeJson(r); throw new Error(e.detail||r.statusText); }
     let d=await safeJson(r);
     setUplStatus('✅ '+d.message);
     document.getElementById('custWav').value=''; document.getElementById('custName').value='';
+    document.getElementById('custPromptText').value='';
     await loadVoices(); renderVoices();
   }catch(err){ setUplStatus('❌ '+err.message); }
 }

@@ -202,7 +202,7 @@ class CosyVoice3Engine(TTSEngine):
     # ---- 音色管理 ----
 
     def register_voice(self, voice_id: str, wav_path: str, name: str,
-                       description: str = '') -> bool:
+                       description: str = '', prompt_text: str = '') -> bool:
         """运行时注册新音色"""
         if voice_id in self._voice_cache:
             logging.warning(f'[register_voice] {voice_id} already exists')

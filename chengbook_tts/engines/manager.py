@@ -114,7 +114,7 @@ class ModelManager:
 
             # 实例化
             engine = engine_cls(
-                voices_config=get_voices(),
+                voices_config=get_voices(include_custom=False),
                 emotions_config=get_emotions(),
                 model_config=config,
             )
@@ -169,18 +169,17 @@ class ModelManager:
         candidates = {
             'cosyvoice3': [
                 project_root / 'models' / 'Fun-CosyVoice3-0.5B',
-                project_root.parent / 'ChengbookTTS_cosyvoice3' / 'models' / 'Fun-CosyVoice3-0.5B',
                 settings.VENDOR_DIR / 'cosyvoice',
             ],
             'soulxpodcast': [
-                project_root.parent / 'SoulX-Podcast' / 'pretrained_models' / 'SoulX-Podcast-1.7B',
+                project_root / 'models' / 'SoulX-Podcast-1.7B',
             ],
             'indextts_v1': [
-                project_root.parent / 'Index-TTS-Vllm2' / 'index-tts-vllm' / 'checkpoints' / 'Index-TTS-1.5-vLLM',
-                project_root.parent / 'Index-TTS-Vllm2' / 'index-tts-vllm' / 'checkpoints' / 'Index-TTS-vLLM',
+                project_root / 'models' / 'Index-TTS-1.5-vLLM',
+                project_root / 'models' / 'Index-TTS-vLLM',
             ],
             'indextts_v2': [
-                project_root.parent / 'Index-TTS-Vllm2' / 'index-tts-vllm' / 'checkpoints' / 'IndexTTS-2-vLLM',
+                project_root / 'models' / 'IndexTTS-2-vLLM',
             ],
         }
 
