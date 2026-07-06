@@ -20,6 +20,7 @@ from chengbook_tts.server.dependencies import get_engine
 from chengbook_tts.server.models import TTSRequest, TTSStreamRequest
 from chengbook_tts.server import concurrency
 from chengbook_tts.server.history import get_history_manager
+from chengbook_tts.config.settings import settings
 
 router = APIRouter(tags=['Native API'])
 
@@ -116,12 +117,17 @@ async def tts(req: TTSRequest, engine: TTSEngine = Depends(get_engine)):
     logging.info(
         f'TTS: voice={req.voice}, emotion={req.emotion}, speed={req.speed}, '
         f'text_len={len(req.text)}, text={req.text[:50]}..., '
+        f'humanize={req.humanize}, humanize_level={req.humanize_level}, '
         f'queue={concurrency.get_pending()}'
     )
 
     try:
         audio = await _run_synthesize(engine, req.text, req.voice, req.emotion,
-                                      req.speed, segment=req.segment)
+                                      req.speed, segment=req.segment,
+                                      humanize=req.humanize,
+                                      humanize_level=req.humanize_level)
+    except HTTPException:
+        raise
     except Exception as e:
         logging.error(f'Synthesis failed: {e}', exc_info=True)
         get_history_manager().record(
@@ -182,16 +188,33 @@ async def tts(req: TTSRequest, engine: TTSEngine = Depends(get_engine)):
 
 
 async def _run_synthesize(engine: TTSEngine, text: str, voice: str, emotion: str,
-                          speed: float, segment: bool = True) -> np.ndarray:
+                          speed: float, segment: bool = True,
+                          humanize: bool = False,
+                          humanize_level: str = 'moderate') -> np.ndarray:
     """线程池中执行合成，asyncio 不阻塞"""
+    from functools import partial
+
     concurrency.inc_pending()
     try:
         async with concurrency.get_semaphore():
             loop = asyncio.get_running_loop()
-            return await loop.run_in_executor(
-                concurrency.get_executor(),
-                engine.synthesize, text, voice, emotion, speed, segment,
+            fn = partial(engine.synthesize, humanize=humanize, humanize_level=humanize_level)
+            return await asyncio.wait_for(
+                loop.run_in_executor(
+                    concurrency.get_executor(),
+                    fn, text, voice, emotion, speed, segment,
+                ),
+                timeout=settings.TTS_TIMEOUT,
             )
+    except asyncio.TimeoutError:
+        logging.error(
+            f'TTS timeout after {settings.TTS_TIMEOUT}s: '
+            f'text_len={len(text)}'
+        )
+        raise HTTPException(
+            status_code=504,
+            detail=f'合成超时（{settings.TTS_TIMEOUT}秒），请缩短文本重试'
+        )
     finally:
         concurrency.dec_pending()
 

@@ -137,6 +137,21 @@ input:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
 </div>
 </div>
 
+<!-- 拟人化预处理 -->
+<div class="card" id="humanizeCard">
+<h2>&#x1f9e0; 拟人化预处理</h2>
+<div class="row" style="margin-bottom:8px">
+  <button class="btn" id="humOff" onclick="setHumanize(false)">&#x2b1b; 关闭</button>
+  <button class="btn" id="humOn" onclick="setHumanize(true)">&#x2705; 开启</button>
+</div>
+<div class="row" id="humLevelRow" style="display:none">
+  <button class="btn" id="humLight" onclick="setHumanizeLevel('light')">轻度</button>
+  <button class="btn" id="humModerate" onclick="setHumanizeLevel('moderate')">中度</button>
+  <button class="btn" id="humHeavy" onclick="setHumanizeLevel('heavy')">重度</button>
+</div>
+<div class="note" id="humNote">注入呼吸、叹气等副语言标签，让语音更自然</div>
+</div>
+
 <!-- 分词 -->
 <div class="card">
 <h2>&#x1f524; 分词 []</h2>
@@ -180,6 +195,7 @@ input:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
 <script>
 let voices=[], emotions=[], models=[];
 let voice='woman', emotion='calm', speed=1.0, segment=true;
+let humanize=false, humanizeLevel='moderate';
 let activeModel='', switching=false;
 let caps={streaming:true,emotion:true,multi_speaker:true,speed_control:true,segmentation:true};
 
@@ -327,6 +343,9 @@ function updateCapUI(){
   // 分词
   let segCard=document.getElementById('segOn').closest('.card');
   if(segCard) segCard.classList.toggle('section-disabled',!caps.segmentation);
+  // 拟人化 — 仅 SoulXPodcast 可用
+  let humCard=document.getElementById('humanizeCard');
+  if(humCard) humCard.style.display=activeModel==='soulxpodcast'?'':'none';
   // 多说话人 — 自定义音色区域
   let custArea=document.getElementById('customVoices').parentElement;
   if(custArea) custArea.style.display=caps.multi_speaker?'':'none';
@@ -370,6 +389,8 @@ async function restoreProfile(){
     else if(emotions.length) emotion=emotions[0].id;
     if(p.speed!==undefined) speed=p.speed;
     if(p.segment!==undefined) segment=p.segment;
+    if(p.humanize!==undefined) humanize=p.humanize;
+    if(p.humanizeLevel!==undefined) humanizeLevel=p.humanizeLevel;
   }catch(err){ console.error(err); }
 }
 
@@ -381,6 +402,7 @@ function renderAll(){
   document.getElementById('speed').value=speed;
   document.getElementById('speedVal').textContent=speed.toFixed(2);
   updateSegUI();
+  updateHumanizeUI();
   updateLive();
 }
 
@@ -429,12 +451,30 @@ function updateSegUI(){
   document.getElementById('segOff').classList.toggle('on',!segment);
 }
 
+async function setHumanize(v){ humanize=v; updateHumanizeUI(); await saveProfile(); }
+async function setHumanizeLevel(v){ humanizeLevel=v; updateHumanizeUI(); await saveProfile(); }
+
+function updateHumanizeUI(){
+  document.getElementById('humOn').classList.toggle('on',humanize);
+  document.getElementById('humOff').classList.toggle('on',!humanize);
+  let row=document.getElementById('humLevelRow');
+  row.style.display=humanize?'flex':'none';
+  document.getElementById('humLight').classList.toggle('on',humanizeLevel==='light');
+  document.getElementById('humModerate').classList.toggle('on',humanizeLevel==='moderate');
+  document.getElementById('humHeavy').classList.toggle('on',humanizeLevel==='heavy');
+  document.getElementById('humNote').textContent=humanize?
+    (humanizeLevel==='light'?'轻度：偶尔注入呼吸/叹气标签':
+     humanizeLevel==='heavy'?'重度：频繁注入标签+说话瑕疵':
+     '中度：适量注入标签+少量瑕疵'):
+    '注入呼吸、叹气等副语言标签，让语音更自然';
+}
+
 async function saveProfile(){
   try{
     await fetch('/api/profile',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({voice,emotion,speed,segment})
+      body:JSON.stringify({voice,emotion,speed,segment,humanize,humanizeLevel})
     });
     updateLive();
   }catch(err){ console.error(err); }
@@ -513,7 +553,7 @@ async function synthesize(){
     let resp=await fetch('/api/tts',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text,voice,emotion,speed,segment})
+      body:JSON.stringify({text,voice,emotion,speed,segment,humanize,humanizeLevel})
     });
     if(!resp.ok){ let e=await safeJson(resp); throw new Error(e.detail||resp.statusText); }
     let blob=await resp.blob(), url=URL.createObjectURL(blob);

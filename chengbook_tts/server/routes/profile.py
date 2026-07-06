@@ -34,6 +34,8 @@ async def get_profile():
         'speed': settings.DEFAULT_SPEED,
         'segment': settings.TEXT_SEGMENT,
         'model_type': settings.MODEL_TYPE,
+        'humanize': settings.HUMANIZE_ENABLED,
+        'humanizeLevel': settings.HUMANIZE_LEVEL,
     }
 
 
@@ -60,6 +62,10 @@ async def update_profile(req: ProfileRequest):
         current['speed'] = req.speed
     if req.segment is not None:
         current['segment'] = req.segment
+    if req.humanize is not None:
+        current['humanize'] = req.humanize
+    if req.humanize_level is not None:
+        current['humanizeLevel'] = req.humanize_level
 
     # 保存
     profile_path.parent.mkdir(parents=True, exist_ok=True)

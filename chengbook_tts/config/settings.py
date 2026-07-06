@@ -57,6 +57,13 @@ class Settings:
     TEXT_PREPROCESS: bool = os.environ.get('TEXT_PREPROCESS', '1').lower() in ('1', 'true', 'yes')
     TEXT_SEGMENT: bool = os.environ.get('TEXT_SEGMENT', '1').lower() in ('1', 'true', 'yes')
 
+    # ====== 拟人化预处理（仅 SoulXPodcast） ======
+    HUMANIZE_ENABLED: bool = False
+    HUMANIZE_LEVEL: str = 'moderate'
+
+    # ====== 合成超时 ======
+    TTS_TIMEOUT: int = int(os.environ.get('TTS_TIMEOUT', '300'))
+
 
 # 全局单例
 settings = Settings()

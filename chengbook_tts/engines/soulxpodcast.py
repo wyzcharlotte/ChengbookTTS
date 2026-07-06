@@ -17,6 +17,9 @@ import torch
 
 from chengbook_tts.engines.base import TTSEngine
 from chengbook_tts.config.settings import settings
+from chengbook_tts.engines.soulxpodcast_humanize import (
+    apply_humanization, perturb_sampling_params, build_config,
+)
 
 
 class SoulXPodcastEngine(TTSEngine):
@@ -198,11 +201,26 @@ class SoulXPodcastEngine(TTSEngine):
                 f'Voice not found: {voice}. Available: {list(self._voice_wavs.keys())}'
             )
 
+        # ---- 拟人化文本预处理 ----
+        humanize_config = self._build_humanize_config(kwargs)
+        original_text = text
+        text = apply_humanization(text, humanize_config)
+        if humanize_config.enabled:
+            changed = text != original_text
+            flag = '★' if changed else '→(无变化)'
+            logging.info(f'[Humanize] {flag} 预处理前: {original_text}')
+            logging.info(f'[Humanize] {flag} 预处理后: {text}')
+            print(f'[Humanize] {flag} 预处理前: {original_text}', flush=True)
+            print(f'[Humanize] {flag} 预处理后: {text}', flush=True)
+
         wav_path = self._voice_wavs[voice]
         prompt_text = self._voices_config.get(voice, {}).get('prompt_text', '')
 
         # 情绪 → 采样参数映射
         sampling_params = self._emotion_to_params(emotion, speed)
+
+        # ---- 采样参数随机扰动 ----
+        sampling_params = perturb_sampling_params(sampling_params, humanize_config)
 
         # 构造单说话人对播数据
         dataitem = {
@@ -263,6 +281,12 @@ class SoulXPodcastEngine(TTSEngine):
             'confused': SamplingParams(temperature=0.55, top_k=90,  top_p=0.9, use_ras=False),
         }
         return emotion_map.get(emotion, emotion_map['calm'])
+
+    def _build_humanize_config(self, kwargs: dict[str, Any]):
+        """从 API kwargs 构建拟人化配置"""
+        humanize = kwargs.get('humanize', False)
+        level = kwargs.get('humanize_level', 'moderate')
+        return build_config(humanize, level)
 
     # ---- 音色管理 ----
 

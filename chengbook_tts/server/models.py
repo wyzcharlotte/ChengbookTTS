@@ -19,6 +19,8 @@ class TTSRequest(BaseModel):
     speed: float = Field(settings.DEFAULT_SPEED, description=f'语速 ({settings.SPEED_MIN}~{settings.SPEED_MAX})',
                          ge=settings.SPEED_MIN, le=settings.SPEED_MAX)
     segment: bool = Field(False, description='是否启用分词+[]预处理（默认关闭，与原始 CosyVoice3 行为一致）')
+    humanize: bool = Field(False, description='是否启用拟人化预处理（仅 SoulXPodcast）')
+    humanize_level: str = Field('moderate', description='拟人化强度: light / moderate / heavy')
 
 
 class TTSStreamRequest(BaseModel):
@@ -58,3 +60,5 @@ class ProfileRequest(BaseModel):
     emotion: Optional[str] = None
     speed: Optional[float] = Field(None, ge=settings.SPEED_MIN, le=settings.SPEED_MAX)
     segment: Optional[bool] = None
+    humanize: Optional[bool] = None
+    humanize_level: Optional[str] = None
