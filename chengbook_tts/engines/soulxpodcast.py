@@ -267,18 +267,24 @@ class SoulXPodcastEngine(TTSEngine):
         return audio.cpu().squeeze(0).numpy().astype(np.float32)
 
     def _emotion_to_params(self, emotion: str, speed: float) -> Any:
-        """将通用情绪名映射到 SoulX-Podcast 采样参数"""
+        """将通用情绪名映射到 SoulX-Podcast 采样参数
+
+        v2: 微调 temperature/top_k/top_p 让不同情绪有更明显的区分度。
+        use_ras=False 保持与上游 transformers 最大兼容性。
+        """
         from soulxpodcast.config import SamplingParams
 
         emotion_map = {
-            'calm':     SamplingParams(temperature=0.6, top_k=100, top_p=0.9, use_ras=False),
-            'happy':    SamplingParams(temperature=0.8, top_k=120, top_p=0.95, use_ras=False),
+            'calm':     SamplingParams(temperature=0.6, top_k=100, top_p=0.9,  use_ras=False),
             'sad':      SamplingParams(temperature=0.5, top_k=80,  top_p=0.85, use_ras=False),
-            'angry':    SamplingParams(temperature=0.9, top_k=150, top_p=0.95, use_ras=False),
             'soft':     SamplingParams(temperature=0.5, top_k=80,  top_p=0.85, use_ras=False),
+            'confused': SamplingParams(temperature=0.55, top_k=90, top_p=0.9,  use_ras=False),
+
+            'happy':    SamplingParams(temperature=0.8, top_k=120, top_p=0.95, use_ras=False),
+
+            'angry':    SamplingParams(temperature=0.9, top_k=150, top_p=0.95, use_ras=False),
             'loud':     SamplingParams(temperature=0.9, top_k=150, top_p=0.95, use_ras=False),
             'impatient': SamplingParams(temperature=0.85, top_k=130, top_p=0.95, use_ras=False),
-            'confused': SamplingParams(temperature=0.55, top_k=90,  top_p=0.9, use_ras=False),
         }
         return emotion_map.get(emotion, emotion_map['calm'])
 

@@ -149,7 +149,7 @@ input:disabled{opacity:.35;cursor:not-allowed;pointer-events:none}
   <button class="btn" id="humModerate" onclick="setHumanizeLevel('moderate')">中度</button>
   <button class="btn" id="humHeavy" onclick="setHumanizeLevel('heavy')">重度</button>
 </div>
-<div class="note" id="humNote">注入呼吸、叹气等副语言标签，让语音更自然</div>
+<div class="note" id="humNote">注入呼吸/叹气/笑声标签 + 自然停顿 + 语气词 + 语速扰动，让语音更自然</div>
 </div>
 
 <!-- 分词 -->
@@ -463,10 +463,10 @@ function updateHumanizeUI(){
   document.getElementById('humModerate').classList.toggle('on',humanizeLevel==='moderate');
   document.getElementById('humHeavy').classList.toggle('on',humanizeLevel==='heavy');
   document.getElementById('humNote').textContent=humanize?
-    (humanizeLevel==='light'?'轻度：偶尔注入呼吸/叹气标签':
-     humanizeLevel==='heavy'?'重度：频繁注入标签+说话瑕疵':
-     '中度：适量注入标签+少量瑕疵'):
-    '注入呼吸、叹气等副语言标签，让语音更自然';
+    (humanizeLevel==='light'?'轻度：偶尔注入呼吸/笑声标签 + 轻微停顿':
+     humanizeLevel==='heavy'?'重度：频繁标签+停顿+语气词+语速扰动':
+     '中度：适量标签+自然停顿+语气词'):
+    '注入呼吸/叹气/笑声标签 + 自然停顿 + 语气词 + 语速扰动，让语音更自然';
 }
 
 async function saveProfile(){
