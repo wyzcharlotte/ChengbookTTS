@@ -109,7 +109,7 @@ class SoulXPodcastEngine(TTSEngine):
         )
         self._config = Config(
             model=self._model_dir,
-            enforce_eager=True,
+            enforce_eager=False,  # Phase 1b: enable CUDA graphs
             llm_engine=self._llm_engine,
             hf_config=hf_config,
         )
@@ -233,6 +233,13 @@ class SoulXPodcastEngine(TTSEngine):
         self._dataset.update_datasource([dataitem])
         data = self._dataset[0]
 
+        # ---- Phase 1d: 动态生成参数 ----
+        # data['text_tokens'] is list[list[int]] (one per turn); sum all turns.
+        # 25Hz speech tokenizer, ~6 tokens/char. Use ~20x for 3x headroom.
+        text_tokens_count = sum(len(t) for t in data['text_tokens'])
+        sampling_params.max_tokens = min(3000, max(600, text_tokens_count * 20))
+        sampling_params.min_tokens = 4
+
         # 准备输入
         prompt_mels_llm, prompt_mels_lens_llm = s3tokenizer.padding(data['log_mel'])
         spk_emb = torch.tensor(data['spk_emb'])
@@ -275,16 +282,16 @@ class SoulXPodcastEngine(TTSEngine):
         from soulxpodcast.config import SamplingParams
 
         emotion_map = {
-            'calm':     SamplingParams(temperature=0.6, top_k=100, top_p=0.9,  use_ras=False),
-            'sad':      SamplingParams(temperature=0.5, top_k=80,  top_p=0.85, use_ras=False),
-            'soft':     SamplingParams(temperature=0.5, top_k=80,  top_p=0.85, use_ras=False),
-            'confused': SamplingParams(temperature=0.55, top_k=90, top_p=0.9,  use_ras=False),
+            'calm':     SamplingParams(temperature=0.6, top_k=100, top_p=0.9,  use_ras=True),
+            'sad':      SamplingParams(temperature=0.5, top_k=80,  top_p=0.85, use_ras=True),
+            'soft':     SamplingParams(temperature=0.5, top_k=80,  top_p=0.85, use_ras=True),
+            'confused': SamplingParams(temperature=0.55, top_k=90, top_p=0.9,  use_ras=True),
 
-            'happy':    SamplingParams(temperature=0.8, top_k=120, top_p=0.95, use_ras=False),
+            'happy':    SamplingParams(temperature=0.8, top_k=120, top_p=0.95, use_ras=True),
 
-            'angry':    SamplingParams(temperature=0.9, top_k=150, top_p=0.95, use_ras=False),
-            'loud':     SamplingParams(temperature=0.9, top_k=150, top_p=0.95, use_ras=False),
-            'impatient': SamplingParams(temperature=0.85, top_k=130, top_p=0.95, use_ras=False),
+            'angry':    SamplingParams(temperature=0.9, top_k=150, top_p=0.95, use_ras=True),
+            'loud':     SamplingParams(temperature=0.9, top_k=150, top_p=0.95, use_ras=True),
+            'impatient': SamplingParams(temperature=0.85, top_k=130, top_p=0.95, use_ras=True),
         }
         return emotion_map.get(emotion, emotion_map['calm'])
 

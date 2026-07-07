@@ -1,4 +1,5 @@
 import os
+import sys
 import types
 import atexit
 from time import perf_counter
@@ -9,6 +10,27 @@ import torch
 import torch.multiprocessing as mp
 from transformers import AutoTokenizer, AutoModelForCausalLM, StoppingCriteriaList, StoppingCriteria
 from transformers import RepetitionPenaltyLogitsProcessor
+
+
+def _detect_best_attn_implementation():
+    """Detect the best available attention implementation for faster inference.
+
+    Priority: flash_attention_2 > sdpa > None (default eager).
+    Flash Attention 2: O(n) memory, 2-3x faster attention via kernel fusion (requires pip install flash-attn).
+    SDPA: PyTorch 2.0+ built-in fused attention, ~1.5-2x faster than eager, no extra deps.
+    """
+    if not torch.cuda.is_available():
+        return None
+    # 1. Try flash_attention_2 first (best performance)
+    try:
+        import flash_attn  # noqa: F401
+        return "flash_attention_2"
+    except ImportError:
+        pass
+    # 2. Fall back to SDPA (PyTorch >= 2.0 built-in)
+    if hasattr(torch.nn.functional, 'scaled_dot_product_attention'):
+        return "sdpa"
+    return None
 try:
     from vllm import LLM
     from vllm import SamplingParams as VllmSamplingParams
@@ -40,7 +62,33 @@ class HFLLMEngine:
         self.tokenizer = AutoTokenizer.from_pretrained(model, use_fast=True)
         config.eos = config.hf_config.eos_token_id # speech eos token;
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.model = AutoModelForCausalLM.from_pretrained(model, torch_dtype=torch.bfloat16, device_map=self.device)
+
+        # --- Phase 1a: Auto-detect best attention backend ---
+        attn_impl = _detect_best_attn_implementation()
+        model_kwargs = dict(
+            torch_dtype=torch.bfloat16,
+            device_map=self.device,
+        )
+        if attn_impl:
+            model_kwargs['attn_implementation'] = attn_impl
+            print(f'[HFLLMEngine] Using attn_implementation={attn_impl}', flush=True)
+
+        self.model = AutoModelForCausalLM.from_pretrained(model, **model_kwargs)
+
+        # --- Phase 1c: torch.compile for JIT kernel fusion ---
+        # fullgraph=False + dynamic=True: safe for auto-regressive (KV cache grows each step)
+        if self.device.startswith("cuda"):
+            try:
+                self.model = torch.compile(
+                    self.model,
+                    mode="reduce-overhead",
+                    fullgraph=False,
+                    dynamic=True,
+                )
+                print('[HFLLMEngine] torch.compile enabled (fullgraph=False, dynamic=True)', flush=True)
+            except Exception as e:
+                print(f'[HFLLMEngine] torch.compile failed: {e}, continuing without', flush=True)
+
         self.config = config
         self.pad_token_id = self.tokenizer.pad_token_id
 
@@ -82,11 +130,22 @@ class HFLLMEngine:
                 use_cache=True,
                 logits_processor=[rep_pen_processor]
             )
-            # custom_generate removed in newer transformers — only pass if handler is set
-            # AND the current API supports it (if not, RAS is simply disabled)
+            # custom_generate (RAS sampler) bypasses standard HF sample/greedy.
+            # transformers 5.x: _validate_model_kwargs may reject it as unrecognized
+            # model_kwarg. Monkey-patch to filter it out before validation.
             if sample_hf_engine_handler is not None:
                 gen_kwargs['custom_generate'] = sample_hf_engine_handler
-            generated_ids = self.model.generate(**gen_kwargs)
+                _orig_validate = getattr(self.model, '_validate_model_kwargs', lambda _: None)
+                def _patched_validate(kwargs_dict):
+                    kwargs_dict.pop('custom_generate', None)
+                    _orig_validate(kwargs_dict)
+                self.model._validate_model_kwargs = _patched_validate
+
+            try:
+                generated_ids = self.model.generate(**gen_kwargs)
+            finally:
+                if sample_hf_engine_handler is not None:
+                    self.model._validate_model_kwargs = _orig_validate
             generated_ids = generated_ids[:, input_len:].cpu().numpy().tolist()[0]
         output = {
             "text": self.tokenizer.decode(generated_ids),
